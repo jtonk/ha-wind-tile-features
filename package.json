@@ -1,0 +1,15 @@
+{
+  "name": "ha-wind-tile-features",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Live wind and history features for native Home Assistant tile cards",
+  "license": "MIT",
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "test": "node --test tests/*.test.cjs",
+    "check": "python3 scripts/build.py --check && node --check wind-tile-features.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

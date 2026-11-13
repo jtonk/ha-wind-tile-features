@@ -1,0 +1,7 @@
+{
+  "name": "Wind Tile Features",
+  "content_in_root": true,
+  "filename": "wind-tile-features.js",
+  "render_readme": true,
+  "homeassistant": "2026.10.0"
+}
