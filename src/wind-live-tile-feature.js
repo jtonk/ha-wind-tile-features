@@ -168,11 +168,11 @@ class WindLiveTileFeature extends HTMLElement {
         .labels{flex:none;display:flex;align-items:center;font-size:11px;line-height:12px;white-space:nowrap}
         .scales{flex:none;color:var(--secondary-text-color)}
         .beaufort,.knots{display:flex;height:11px}
-        .force{flex:none;box-sizing:border-box;container-type:inline-size;border:1px solid var(--divider-color,rgba(127,127,127,.25));border-right:0;border-radius:0;text-align:center;font-size:9px;line-height:9px;overflow:hidden}
-        .force:last-child{border-right:1px solid var(--divider-color,rgba(127,127,127,.25))}
+        .force{flex:none;box-sizing:border-box;container-type:inline-size;border:1px solid currentColor;border-right:0;border-radius:0;text-align:center;font-size:9px;line-height:9px;overflow:hidden}
+        .force:last-child{border-right:1px solid currentColor}
         .force{border-top:0;line-height:10px;transition:background-color 750ms ease-in-out,color 750ms ease-in-out}
         .force.active{background-color:color-mix(in srgb,var(--force-color) 35%,transparent);color:var(--primary-text-color);font-weight:700}
-        .knots{position:relative;box-sizing:border-box;font-size:9px;line-height:11px;border-bottom:1px solid var(--divider-color,rgba(127,127,127,.25))}
+        .knots{position:relative;box-sizing:border-box;font-size:9px;line-height:11px;border-bottom:1px solid currentColor}
         .knot-value{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
         .knot-value:first-child{transform:translateX(1px)}
         @container (max-width:12px){.force span{visibility:hidden}}
