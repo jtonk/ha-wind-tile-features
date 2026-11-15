@@ -57,16 +57,16 @@ Use only the corresponding feature entry for a slider-only or graph-only tile. L
 
 | Option | Feature | Meaning |
 | --- | --- | --- |
-| `colors` | Live | YAML-only palette override: at least two six-digit hex colors or explicit `{speed, color}` stops. |
+| `colors` | Both | YAML-only palette override: at least two six-digit hex colors or explicit `{speed, color}` stops. |
 | `gust_entity` | Both | Optional gust sensor; otherwise tries `<tile entity>_gusts`, then the tile sensor's `gusts` or `vlagen` attribute for the live value. |
 | `direction_entity` | History | Optional direction sensor; otherwise replaces `_speed` with `_wind_direction`. Select it in the feature editor. |
 | `direction_entity` | Live | Optional YAML override for direction; otherwise uses the same naming convention, `direction`, or `cardinal` attribute. |
 
 The scales use knots. Sensor units `kn`, `m/s`, `km/h`, and `mph` are supported. Gusts can have their own unit. The live slider covers 0–56 kn; values above that remain in the text and the marker reaches the end. The displayed Beaufort cells cover forces 0–10, so a value at or above 56 kn has no highlighted cell.
 
-### Custom slider colors (YAML only)
+### Custom wind colors (YAML only)
 
-Set `colors` on the **live feature**, not on the tile card itself. This option is intentionally absent from the visual feature editor. Omit it to retain the default Windfinder palette. It affects the live slider and its Beaufort highlight; the history graph keeps its Windfinder colors.
+Set `colors` on each **feature**, not on the tile card itself. Use the same list on the live and history features to match them. This option is intentionally absent from the visual feature editor. Omit it to retain the default Windfinder palette. It affects the live slider and its Beaufort highlight, or the history bars and gust caps, depending on which feature it is configured on.
 
 A simple list spreads colors evenly across 0–56 kn:
 
@@ -98,7 +98,7 @@ features:
         color: "#aa00ff"
 ```
 
-Use at least two entries, all in the same format. Colors must be quoted six-digit hex values (`"#rrggbb"`). Speeds are numbers in knots between 0 and 56, strictly increasing. Values outside the first/last stop keep that endpoint color. The gradient blends between stops; the Beaufort highlight uses the stop at or below the current speed, matching the default palette's banded behavior. Removing `colors` restores the default. Other feature options such as `gust_entity` can be used alongside `colors`.
+Use at least two entries, all in the same format. Colors must be quoted six-digit hex values (`"#rrggbb"`). Speeds are numbers in knots between 0 and 56, strictly increasing. Values outside the first/last stop keep that endpoint color. The gradient blends between stops; the Beaufort highlight, history bars, and gust caps use the stop at or below their speed, matching the default palette's banded behavior. Removing `colors` restores the default. Other feature options such as `gust_entity` can be used alongside `colors`.
 
 ### Fifteen-second data batches
 

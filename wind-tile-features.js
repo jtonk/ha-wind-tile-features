@@ -1,4 +1,4 @@
-/* Wind Tile Features v0.1.2 | MIT | github.com/jtonk/ha-wind-tile-features */
+/* Wind Tile Features v0.1.3 | MIT | github.com/jtonk/ha-wind-tile-features */
 
 (() => {
   if (customElements.get('wind-history-tile-feature')) return;
@@ -60,7 +60,9 @@ class WindHistoryTileFeature extends HTMLElement {
   setConfig(config) {
     if (!config || config.type !== 'custom:wind-history-tile-feature')
       throw new Error('Invalid wind history tile feature configuration');
+    const stops = this._parseColors(config.colors);
     this._config = config;
+    this._colorStops = stops;
     this._history = {};
     this._lastFetch = 0;
     this._requestId++;
@@ -271,9 +273,30 @@ class WindHistoryTileFeature extends HTMLElement {
     return bars;
   }
 
+  _parseColors(colors) {
+    if (colors === undefined) return [
+      ...WIND_HISTORY_COLORS.map((color, index) => ({ speed: index * 2, color })),
+      { speed: 56, color: WIND_HISTORY_COLORS.at(-1) }
+    ];
+    if (!Array.isArray(colors) || colors.length < 2)
+      throw new Error('colors must contain at least two colors or {speed, color} stops');
+    const simple = colors.every(color => typeof color === 'string');
+    const stops = colors.map((item, index) => {
+      const speed = simple ? index * 56 / (colors.length - 1) : item?.speed;
+      const color = simple ? item : item?.color;
+      if (typeof speed !== 'number' || !Number.isFinite(speed) || speed < 0 || speed > 56 ||
+          typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color))
+        throw new Error('Each colors entry needs a six-digit hex color and a speed between 0 and 56 kn');
+      return { speed, color };
+    });
+    if (stops.some((stop, index) => index > 0 && stop.speed <= stops[index - 1].speed))
+      throw new Error('colors speeds must be strictly increasing');
+    return stops;
+  }
+
   _color(knots) {
-    return WIND_HISTORY_COLORS[Math.max(0, Math.min(
-      WIND_HISTORY_COLORS.length - 1, Math.floor(Math.max(0, knots) / 2)))];
+    const stops = this._colorStops || this._parseColors();
+    return [...stops].reverse().find(stop => stop.speed <= knots)?.color || stops[0].color;
   }
 
   _scaleMax(bars) {

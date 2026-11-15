@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+Support the same YAML-only `colors` palette on history bars and gust caps as on the live slider.
+
 ## 0.1.2
 
 Add a YAML-only `colors` option for the live slider: evenly spaced hex colors or explicit knot/color stops. Reconfiguring a palette updates the existing slider without resetting its markers.

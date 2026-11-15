@@ -120,3 +120,18 @@ test('palette changes apply to the existing track and removing the option restor
   const fields=load().registry.get('wind-live-tile-feature').getConfigForm().schema;
   assert(!fields.some(field=>field.name==='colors'));
 });
+test('history bars and gust caps use the same palette mapping as the live feature', () => {
+  const history=feature(),live=feature('wind-live-tile-feature');
+  for(const colors of [undefined,['#d599ff','#99f599','#ff99d5'],
+      [{speed:0,color:'#d599ff'},{speed:20,color:'#99f599'},{speed:56,color:'#ff99d5'}]]) {
+    history._colorStops=history._parseColors(colors);
+    live._colorStops=live._parseColors(colors);
+    for(const speed of [0,1,14,19.9,20,26,55,56,80])
+      assert.equal(history._color(speed),live._highlightColor(speed));
+    const geometry=history._geometry([{wind:14,gust:26}]);
+    assert.equal(geometry[0].color,live._highlightColor(14));
+    assert.equal(geometry[1].color,live._highlightColor(26));
+  }
+  assert.throws(()=>history._parseColors(['red','blue']),/hex color/);
+  assert(!load().registry.get('wind-history-tile-feature').getConfigForm().schema.some(f=>f.name==='colors'));
+});
