@@ -88,3 +88,35 @@ test('live readings play fifteen aligned samples and convert units', () => {
   assert.equal(live._cardinal(360),'N');
   assert.equal(live._cardinal(-90),'W');
 });
+test('custom color lists span the entire knot scale; explicit stops keep knot positions', () => {
+  const live=feature('wind-live-tile-feature');
+  live._colorStops=live._parseColors(['#0000ff','#00ff00','#ff0000']);
+  assert.equal(live._gradient(),'linear-gradient(90deg, #0000ff 0.00%, #00ff00 50.00%, #ff0000 100.00%)');
+  live._colorStops=live._parseColors([{speed:0,color:'#0000ff'},{speed:14,color:'#00ff00'},{speed:56,color:'#ff0000'}]);
+  assert(live._gradient().includes('#00ff00 25.00%'));
+  assert.equal(live._highlightColor(13),'#0000ff');
+  assert.equal(live._highlightColor(14),'#00ff00');
+});
+test('invalid palettes fail clearly instead of injecting invalid gradient CSS', () => {
+  const live=feature('wind-live-tile-feature');
+  for(const colors of [null,[],['#000000'],['red','blue'],['#000000','red;}</style>'],
+      [{speed:20,color:'#000000'},{speed:10,color:'#ffffff'}],
+      [{speed:0,color:'#000000'},{speed:57,color:'#ffffff'}],
+      [{speed:0,color:'#000000'},{speed:0,color:'#ffffff'}],
+      [{speed:'0',color:'#000000'},{speed:56,color:'#ffffff'}]])
+    assert.throws(()=>live._parseColors(colors),/colors|color/);
+});
+test('palette changes apply to the existing track and removing the option restores defaults', () => {
+  const live=feature('wind-live-tile-feature');
+  const track={style:{}};live.shadowRoot.querySelector=selector=>selector==='.track'?track:null;
+  live._timelineIndex=7;
+  live.setConfig({type:'custom:wind-live-tile-feature',colors:['#000000','#ffffff']});
+  assert.equal(track.style.background,'linear-gradient(90deg, #000000 0.00%, #ffffff 100.00%)');
+  assert.equal(live._timelineIndex,7);
+  live.setConfig({type:'custom:wind-live-tile-feature'});
+  assert(track.style.background.includes('#9700ff 0.00%'));
+  assert(track.style.background.includes('#fe0096 100.00%'));
+  assert.equal(live._highlightColor(14),'#00e6f0');
+  const fields=load().registry.get('wind-live-tile-feature').getConfigForm().schema;
+  assert(!fields.some(field=>field.name==='colors'));
+});

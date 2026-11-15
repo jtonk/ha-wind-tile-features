@@ -5,8 +5,6 @@ const WIND_LIVE_COLORS = [
   '#ffe100', '#ffc800', '#ffaf00', '#ff9600', '#e67d00', '#e66400', '#dc4a1d',
   '#c8321d', '#b4191d', '#aa001d', '#b40032', '#c80064', '#fe0096'
 ];
-const WIND_LIVE_GRADIENT = `linear-gradient(90deg, ${WIND_LIVE_COLORS.map((color, index) =>
-  `${color} ${Math.min(100, index * 2 / 56 * 100).toFixed(2)}%`).join(', ')}, ${WIND_LIVE_COLORS.at(-1)} 100%)`;
 
 const supportsWindLive = (hass, context) => {
   const id = context?.entity_id;
@@ -43,8 +41,45 @@ class WindLiveTileFeature extends HTMLElement {
   setConfig(config) {
     if (!config || config.type !== 'custom:wind-live-tile-feature')
       throw new Error('Invalid live wind tile feature configuration');
+    const stops = this._parseColors(config.colors);
     this._config = config;
+    this._colorStops = stops;
     this._render();
+    const track = this.shadowRoot.querySelector('.track');
+    if (track) track.style.background = this._gradient();
+    this._update();
+  }
+
+  _parseColors(colors) {
+    if (colors === undefined) return [
+      ...WIND_LIVE_COLORS.map((color, index) => ({ speed: index * 2, color })),
+      { speed: 56, color: WIND_LIVE_COLORS.at(-1) }
+    ];
+    if (!Array.isArray(colors) || colors.length < 2)
+      throw new Error('colors must contain at least two colors or {speed, color} stops');
+    const simple = colors.every(color => typeof color === 'string');
+    const stops = colors.map((item, index) => {
+      const speed = simple ? index * 56 / (colors.length - 1) : item?.speed;
+      const color = simple ? item : item?.color;
+      if (typeof speed !== 'number' || !Number.isFinite(speed) || speed < 0 || speed > 56 ||
+          typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color))
+        throw new Error('Each colors entry needs a six-digit hex color and a speed between 0 and 56 kn');
+      return { speed, color };
+    });
+    if (stops.some((stop, index) => index > 0 && stop.speed <= stops[index - 1].speed))
+      throw new Error('colors speeds must be strictly increasing');
+    return stops;
+  }
+
+  _gradient() {
+    const stops = this._colorStops || this._parseColors();
+    return `linear-gradient(90deg, ${stops.map(stop =>
+      `${stop.color} ${(stop.speed / 56 * 100).toFixed(2)}%`).join(', ')})`;
+  }
+
+  _highlightColor(speed) {
+    const stops = this._colorStops || this._parseColors();
+    return [...stops].reverse().find(stop => stop.speed <= speed)?.color || stops[0].color;
   }
 
   set hass(hass) {
@@ -176,7 +211,7 @@ class WindLiveTileFeature extends HTMLElement {
         .knot-value{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
         .knot-value:first-child{transform:translateX(1px)}
         @container (max-width:12px){.force span{visibility:hidden}}
-        .track{height:9px;flex:none;position:relative;margin:4px 0;overflow:visible;background:${WIND_LIVE_GRADIENT};border-radius:3px}
+        .track{height:9px;flex:none;position:relative;margin:4px 0;overflow:visible;background:${this._gradient()};border-radius:3px}
         .speed-marker,.gust-marker{position:absolute;width:0;height:0;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;transition:left 750ms cubic-bezier(.65,0,.35,1)}
         .speed-marker{top:-4px;border-top:4px solid var(--primary-text-color)}
         .gust-marker{bottom:-4px;border-bottom:4px solid var(--primary-text-color)}
@@ -209,8 +244,7 @@ class WindLiveTileFeature extends HTMLElement {
       const active = index === force;
       cell.classList.toggle('active', active);
       if (active) {
-        cell.style.setProperty('--force-color', WIND_LIVE_COLORS[Math.max(0, Math.min(
-          WIND_LIVE_COLORS.length - 1, Math.floor(next.speed / 2)))]);
+        cell.style.setProperty('--force-color', this._highlightColor(next.speed));
         cell.setAttribute('aria-current', 'true');
       } else {
         cell.style.removeProperty('--force-color');
